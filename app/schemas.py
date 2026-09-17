@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from sqlalchemy import Column, Integer, String,TIMESTAMP, Boolean, text
@@ -12,10 +14,10 @@ class PostBase(BaseModel):
 class PostCreate(PostBase):
     pass
 
-
 class Post(PostBase):
     id: int
     created_at: datetime
+    user_id: int
 
     class Config:
         orm_mode = True 
@@ -34,6 +36,13 @@ class UserOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
 
 class User(BaseModel):
     id: int
