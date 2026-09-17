@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
+from typing import List
 from app.oauth2 import get_current_user, oauth2_scheme
 
 from typing import Optional
@@ -15,41 +16,55 @@ from fastapi import APIRouter
 router = APIRouter(prefix="/posts",
                    tags=["posts"])
 
-@router.get("/")
+@router.get("/", response_model=List[schemas.Post])
 def get_posts(
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+    limit: int = 10,
+    skip: int = 0,
+    search: Optional[str] = None,
 ):
-    current_user: str = Depends(get_current_user),
+    posts_query = db.query(models.Post)
+    if search:
+        posts_query = posts_query.filter(models.Post.title.ilike(f"%{search}%"))
 
-    posts = db.query(models.Post).all()
+        print(f"Search received: {search!r}")
+    posts = posts_query.limit(limit).offset(skip).all()
     return posts
 
 @router.post("/", status_code=201, response_model=schemas.Post)
-def create_post(post: schemas.PostCreate, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+def create_post(post: schemas.PostCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     new_post = models.Post(
         user_id=current_user.id,
         **post.model_dump())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
-    print(current_user.email)
     return new_post 
 
 @router.get("/latest", response_model=schemas.Post)
 def get_latest_post(
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
 ):
     post = db.query(models.Post).order_by(models.Post.id.desc()).first()
     if not post:
         raise HTTPException(status_code=404, detail="No posts available")
     return  post
 
+@router.get("/me", response_model=List[schemas.Post])
+def get_my_posts(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    posts = db.query(models.Post).filter(models.Post.user_id == current_user.id).all()
+    return posts
+
 @router.get("/{id}", response_model=schemas.Post)
 def get_post(
     id: int,
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
 ):
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if not post:
@@ -60,7 +75,7 @@ def get_post(
 def delete_post(
     id: int,
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
 ):
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if not post:
@@ -75,7 +90,7 @@ def update_post(
     id: int,
     post: schemas.PostCreate,
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
 ):
     updated_post = db.query(models.Post).filter(models.Post.id == id).first()
     if not updated_post:
@@ -87,6 +102,7 @@ def update_post(
         )
     updated_post.title = post.title
     updated_post.content = post.content
+    updated_post.published = post.published
     db.commit()
     db.refresh(updated_post)
     return updated_post

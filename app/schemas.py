@@ -1,26 +1,12 @@
+from __future__ import annotations
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr
+
 from datetime import datetime
 from sqlalchemy import Column, Integer, String,TIMESTAMP, Boolean, text
 
 from app.database import Base
-
-class PostBase(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-
-class PostCreate(PostBase):
-    pass
-
-class Post(PostBase):
-    id: int
-    created_at: datetime
-    user_id: int
-
-    class Config:
-        orm_mode = True 
 
 class UserBase(BaseModel):
     email: str
@@ -36,6 +22,24 @@ class UserOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class PostBase(BaseModel):
+    title: str
+    content: str
+    published: bool = True
+
+class PostCreate(PostBase):
+    pass
+
+class Post(PostBase):
+    id: int
+    created_at: datetime
+    user_id: int
+    user: UserOut
+
+    class Config:
+        orm_mode = True 
+
 
 class Token(BaseModel):
     access_token: str
