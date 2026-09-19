@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, conint
 
 from datetime import datetime
 from sqlalchemy import Column, Integer, String,TIMESTAMP, Boolean, text
@@ -40,6 +40,13 @@ class Post(PostBase):
     class Config:
         orm_mode = True 
 
+class PostOut(BaseModel):
+    Post: Post
+    votes: int
+
+    class Config:
+        orm_mode = True
+
 
 class Token(BaseModel):
     access_token: str
@@ -62,3 +69,7 @@ class UserLogin(BaseModel):
 
     class Config:
         orm_mode = True
+
+class Vote(BaseModel):
+    post_id: int
+    dir: conint(ge=0, le=1)

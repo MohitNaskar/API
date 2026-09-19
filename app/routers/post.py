@@ -6,6 +6,7 @@ from app.oauth2 import get_current_user, oauth2_scheme
 from typing import Optional
 from .. import models, schemas
 from ..database import engine, get_db
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
@@ -16,7 +17,7 @@ from fastapi import APIRouter
 router = APIRouter(prefix="/posts",
                    tags=["posts"])
 
-@router.get("/", response_model=List[schemas.Post])
+@router.get("/", response_model=List[schemas.PostOut])
 def get_posts(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -24,11 +25,13 @@ def get_posts(
     skip: int = 0,
     search: Optional[str] = None,
 ):
-    posts_query = db.query(models.Post)
+    posts_query = db.query(
+        models.Post, func.count(models.Vote.post_id).label("votes")
+    ).join(
+        models.Vote, models.Post.id == models.Vote.post_id, isouter=True
+    ).group_by(models.Post.id)
     if search:
         posts_query = posts_query.filter(models.Post.title.ilike(f"%{search}%"))
-
-        print(f"Search received: {search!r}")
     posts = posts_query.limit(limit).offset(skip).all()
     return posts
 

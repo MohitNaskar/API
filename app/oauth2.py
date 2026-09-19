@@ -2,19 +2,12 @@ from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session
 from .database import get_db
 from . import models
-import os
-from dotenv import load_dotenv
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
 
 from app import schemas
-
-load_dotenv()
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "3600"))
+from .config import ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 

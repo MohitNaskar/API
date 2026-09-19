@@ -1,13 +1,7 @@
-from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
+from fastapi import FastAPI
 
-from typing import Optional
-from . import models, schemas
-from .database import engine, get_db
-from sqlalchemy.orm import Session
-from passlib.context import CryptContext
-
-import app
+from . import models
+from .database import engine
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -22,10 +16,13 @@ def read_root():
 import app.routers.post as post
 import app.routers.users as users
 import app.routers.auth as auth
+import app.routers.vote as vote
 
 app.include_router(post.router)
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(vote.router)
+
 
 
 
