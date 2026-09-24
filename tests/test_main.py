@@ -1,13 +1,12 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
-
-
-client = TestClient(app)
-
-
-def test_root():
+def test_root(client):
     response = client.get("/")
 
     assert response.status_code == 200
     assert response.json() == {"Hello": "World"}
+
+
+def test_openapi_docs_are_available(client):
+    response = client.get("/openapi.json")
+
+    assert response.status_code == 200
+    assert response.json()["info"]["title"] == "FastAPI"

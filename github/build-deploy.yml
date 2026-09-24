@@ -1,0 +1,5 @@
+name: Build and Deply Code
+
+on:
+  push:
+    branches:["main"]
